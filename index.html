@@ -3,23 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#123b57">
+  <meta name="theme-color" content="#110d37">
   <title>Scabro / Intranet</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <a class="skip-link" href="#workspaceContent">Skip to workspace content</a>
   <div class="app-shell">
-    <aside class="sidebar" aria-label="Primary navigation">
-      <div class="brand-lockup">
-        <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
-        <div>
-          <strong>scabro</strong>
-          <small>innovations</small>
-        </div>
-      </div>
+    <aside class="sidebar" id="primaryNavigation" aria-label="Primary navigation">
+      <a class="brand-lockup" href="#overview" aria-label="Scabro home"><img src="assets/logo-inverse.svg" alt="Scabro Innovations"><small>THE WORKSPACE</small></a>
 
       <div class="workspace-label">WORKSPACE <span>01</span></div>
       <nav class="main-nav">
@@ -38,12 +30,13 @@
 
       <div class="sidebar-footer">
         <div class="status-dot"></div>
-        <div><span>Systems operational</span><small>Last checked 09:41</small></div>
+        <div><span>Demo workspace</span><small>Illustrative data · local storage</small></div>
       </div>
     </aside>
 
     <main class="main-content" id="overview">
       <header class="topbar">
+        <button class="mobile-menu icon-button" aria-label="Toggle navigation" aria-controls="primaryNavigation" aria-expanded="false">☰</button>
         <div class="breadcrumb"><span>SCABRO HQ</span><i>/</i> <strong>INTRANET</strong></div>
         <div class="top-actions">
           <button class="icon-button" aria-label="Search" title="Search"><span class="search-icon"></span></button>
@@ -52,10 +45,10 @@
         </div>
       </header>
 
-      <div class="content-wrap">
+      <div class="content-wrap" id="workspaceContent" tabindex="-1">
         <section class="welcome-row">
           <div>
-            <p class="eyebrow">MONDAY, 14 OCTOBER 2026 <span class="eyebrow-line"></span> KATWIJK</p>
+            <p class="eyebrow" id="todayLabel"></p>
             <h1>Good morning, Joris<span class="accent-dot">.</span></h1>
             <p class="intro">The floor is moving well today. Here is your operational overview.</p>
           </div>
@@ -64,9 +57,9 @@
 
         <section class="hero-panel" id="production">
           <div class="hero-copy">
-            <div class="live-label"><span></span> LIVE PRODUCTION PULSE</div>
-            <h2>Building the future<br><i>of flight.</i></h2>
-            <p>Current activity across Scabro's production and engineering teams.</p>
+            <div class="live-label"><span></span> OUR PEOPLE. OUR PROGRESS.</div>
+            <h2>Where ideas<br><i>take flight.</i></h2>
+            <p>From precision tooling to production-ready airframes. Great things happen when we build together.</p>
             <a class="text-link" href="#projects">View production board <span>↗</span></a>
           </div>
           <div class="hero-visual" role="img" aria-label="Composite aircraft component on the production floor">
@@ -104,7 +97,8 @@
       </div>
     </main>
   </div>
-  <div class="toast" role="status" aria-live="polite">Update composer is ready for your note.</div>
+  <dialog id="modal" aria-labelledby="modalTitle"><div class="modal-heading"><h2 id="modalTitle"></h2><button class="icon-button" id="closeModal" aria-label="Close dialog">×</button></div><div id="modalBody"></div></dialog>
+  <div class="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
 </body>
 </html>

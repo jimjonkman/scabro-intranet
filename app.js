@@ -1,52 +1,98 @@
-const toast = document.querySelector('.toast');
-const content = document.querySelector('.content-wrap');
-const pageLabel = document.querySelector('.breadcrumb strong');
+const $ = (selector, root = document) => root.querySelector(selector);
+const content = $('.content-wrap');
+const modal = $('#modal');
+const today = new Date();
+const dateKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const escapeHTML = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const storageKey = 'scabro-workspace-v2';
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(storageKey)||'{}')||{}; } catch { /* Storage can be disabled. */ }
+let updates = Array.isArray(saved.updates)?saved.updates.filter(x=>x&&typeof x.text==='string'&&typeof x.team==='string'):[];
+let events = Array.isArray(saved.events)?saved.events.filter(x=>x&&typeof x.title==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&/^\d{2}:\d{2}$/.test(x.time)):[];
+let selectedDate = dateKey(today);
+let updateFilter = 'All updates';
+let projectFilter = 'All projects';
 const routes = {
-  overview: { label: 'OVERVIEW', title: 'Good morning, Joris.', intro: 'The floor is moving well today. Here is your operational overview.' },
-  production: { label: 'PRODUCTION', title: 'Production control room.', intro: 'A live view of every cell, shift, and handoff across the floor.' },
-  projects: { label: 'PROJECTS', title: 'Programs in motion.', intro: 'Track the work that takes Scabro from first sketch to flight-ready.' },
-  people: { label: 'PEOPLE & TEAMS', title: 'The people behind the work.', intro: 'Find a teammate, see who is on the floor, and stay connected.' },
-  knowledge: { label: 'KNOWLEDGE BASE', title: 'Make the next answer easier.', intro: 'A living library of standards, playbooks, and lessons learned.' },
-  quality: { label: 'QUALITY & SAFETY', title: 'Precision is a team sport.', intro: 'Keep every build traceable, safe, and ready for what comes next.' },
-  calendar: { label: 'COMPANY CALENDAR', title: 'The week, at a glance.', intro: 'Meetings, briefings, and the moments that keep the whole system aligned.' }
+  overview:['Overview','Good morning, Joris.','Everything you need to keep ideas, people and production moving.'],
+  production:['Production','From craft to flight.','A shared view of the floor, from first layup to final handoff.'],
+  projects:['Projects','Ideas taking shape.','Four programs. One ambition. Built to move forward together.'],
+  people:['People & teams','Built by our people.','Find the people and expertise behind every component.'],
+  knowledge:['Knowledge base','Know more. Build better.','The starting point for shared knowledge and working standards.'],
+  quality:['Quality & safety','Precision. Every day.','Keep quality visible and safe working practices close at hand.'],
+  calendar:['Company calendar','Make time for progress.','Briefings, reviews and the moments that bring the team together.']
 };
-
-function showToast(message) {
-  toast.textContent = message;
-  toast.classList.add('show');
-  window.clearTimeout(showToast.timeout);
-  showToast.timeout = window.setTimeout(() => toast.classList.remove('show'), 2600);
-}
-
-function pageTemplate(key) {
-  const route = routes[key];
-  if (key === 'overview') return null;
-  const lists = {
-    production: ['Cell 01 / Composite layup / On schedule', 'Cell 02 / Tooling inspection / Review needed', 'Cell 03 / Atlas airframe / Active now', 'Cell 04 / Helix landing gear / Handoff 14:30'],
-    projects: ['Atlas / Flight-ready airframe', 'Helix / Landing gear system', 'Nova / Composite tooling', 'Orbit / Cabin demonstrator'],
-    people: ['Engineering / 12 people online', 'Production / 18 people on the floor', 'Quality & safety / 8 people online', 'Operations / 4 people available'],
-    knowledge: ['Getting started at Scabro', 'Composite handling standard', 'Atlas build playbook', 'Incident response guide'],
-    quality: ['Open inspections / 3 items', 'Safety observations / 8 this month', 'Audit readiness / 94% complete', 'Recent completions / 21 items'],
-    calendar: ['Daily floor briefing / Today 09:30', 'Atlas design review / Today 13:00', 'Safety walk / Today 15:30', 'Innovation afternoon / 22 October']
-  };
-  return `<section class="page-heading"><div><p class="eyebrow">${route.label} <span class="eyebrow-line"></span> KATWIJK</p><h1>${route.title.replace('.', '<span class="accent-dot">.</span>')}</h1><p class="intro">${route.intro}</p></div><button class="primary-button action-button">+ Create new</button></section><section class="route-grid">${lists[key].map((item, index) => `<article class="route-card"><span class="card-index">0${index + 1}</span><div><p class="eyebrow">${index % 2 ? 'ACTIVE NOW' : 'SCABRO HQ'}</p><h3>${item.split(' / ')[0]}</h3><p>${item.split(' / ').slice(1).join(' / ')}</p><a class="text-link" href="#overview">Open view <span>↗</span></a></div></article>`).join('')}</section><section class="data-panel"><div class="section-heading"><div><p class="eyebrow">WORKSPACE SIGNAL</p><h3>Today at Scabro</h3></div><span class="live-label dark-label"><span></span> LIVE</span></div><div class="signal-row"><strong>${key === 'calendar' ? '14' : key === 'quality' ? '98%' : '86%'}</strong><p>${key === 'calendar' ? 'events scheduled across HQ this week.' : 'of the workspace is moving on plan today.'}</p><span class="quality-trend">↗ 4.2%</span></div></section>`;
-}
-
-function navigate() {
-  const key = window.location.hash.slice(1) || 'overview';
-  const routeKey = routes[key] ? key : 'overview';
-  pageLabel.textContent = routes[routeKey].label;
-  const replacement = pageTemplate(routeKey);
-  if (replacement) content.innerHTML = replacement;
-  else window.location.reload();
-  document.querySelectorAll('.nav-item').forEach((item) => item.classList.toggle('active', item.getAttribute('href') === `#${routeKey}`));
-  content.querySelectorAll('.action-button').forEach((item) => item.addEventListener('click', () => showToast(`${item.textContent.trim()} is ready for your note.`)));
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-window.addEventListener('hashchange', navigate);
-document.querySelector('.icon-button').addEventListener('click', () => showToast('Search is ready across the Scabro workspace.'));
-document.querySelector('.notification-button').addEventListener('click', () => showToast('You have 3 new team updates.'));
-document.querySelector('#addUpdate').addEventListener('click', () => showToast('Update composer is ready for your note.'));
-document.querySelector('.add-calendar').addEventListener('click', () => showToast('New calendar event started.'));
-navigate();
+const projects = [
+  {name:'Atlas',code:'SCB / 024',description:'Composite airframe development',status:'In production',progress:72,team:'Engineering & production',due:'28 October',detail:'Layup and assembly are in progress. The next milestone is the airframe inspection and engineering handoff.'},
+  {name:'Helix',code:'SCB / 025',description:'Lightweight landing gear system',status:'In production',progress:58,team:'Production',due:'30 October',detail:'The current batch is moving through curing and trimming. Tooling verification is required before the next batch.'},
+  {name:'Nova',code:'SCB / 026',description:'Next-generation composite tooling',status:'Engineering',progress:36,team:'Engineering',due:'12 November',detail:'Tool geometry is under review. Engineering is preparing the manufacturing package for the prototype build.'},
+  {name:'Orbit',code:'SCB / 027',description:'Cabin structure demonstrator',status:'Review',progress:91,team:'Quality & engineering',due:'23 October',detail:'Final dimensional inspection is pending. Review the results before closing the demonstrator phase.'}
+];
+const initialUpdates = [
+  {name:'Ruben Meijer',initials:'RM',text:'Shared the latest production brief for project Atlas. The next build is ready for review.',team:'Engineering',when:'Demo update'},
+  {name:'Sanne Visser',initials:'SV',text:'Completed the tooling inspection. The checklist is available in Quality & safety.',team:'Quality & safety',when:'Demo update'},
+  {name:'Thijs Bakker',initials:'TB',text:'A great handoff on the floor today. Thank you to everyone on the composite layup team.',team:'Production',when:'Demo update'}
+];
+const people = [
+  ['Ruben Meijer','RM','Engineering','Project engineer'],['Sanne Visser','SV','Quality & safety','Quality coordinator'],['Thijs Bakker','TB','Production','Production lead'],['Joris van Dijk','JV','Operations','Operations coordinator'],['Anna Smit','AS','Engineering','Composite engineer'],['Mark de Vries','MV','Production','Tooling specialist']
+];
+const documents = [
+  {title:'Getting started at Scabro',category:'Onboarding',body:'Use People & teams to find a colleague, Projects to explore current programs, and Company calendar to plan your week. Ask your team lead for your induction schedule and access to approved company systems.'},
+  {title:'Composite handling standard',category:'Manufacturing',body:'This is a preview entry for the company knowledge base. The approved composite handling standard has not been connected. Obtain the controlled document from the quality coordinator before performing work.'},
+  {title:'Atlas build playbook',category:'Engineering',body:'This preview links the Atlas program to its future build documentation. Approved drawings, revision history and work instructions must be supplied by the engineering team.'},
+  {title:'Incident response guide',category:'Quality & safety',body:'This is a placeholder for the approved site incident response procedure. Refer to posted site instructions and contact the safety coordinator for the controlled document.'}
+];
+$('#todayLabel').textContent=new Intl.DateTimeFormat('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(today).toUpperCase()+' / KATWIJK';
+const overviewHTML=content.innerHTML;
+const metricsHTML=$('.metric-grid').outerHTML;
+function toast(message){const el=$('.toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),3500);}
+function persist(){try{localStorage.setItem(storageKey,JSON.stringify({updates,events}));return true;}catch{toast('Saved for this session. Browser storage is unavailable.');return false;}}
+function openModal(title,body){$('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;if(!modal.open)modal.showModal();}
+function routeKey(){return Object.hasOwn(routes,location.hash.slice(1))?location.hash.slice(1):'overview';}
+function heading(key,action=''){const r=routes[key];return `<section class="page-heading"><div><p class="eyebrow">${r[0]} <span class="eyebrow-line"></span> KATWIJK</p><h1>${r[1].replace(/\.$/,'<span class="accent-dot">.</span>')}</h1><p class="intro">${r[2]}</p></div>${action}</section>`;}
+const updateButton='<button class="primary-button" data-action="update"><span class="plus-icon">+</span> Share an update</button>';
+function updatesHTML(limit=3){return [...updates,...initialUpdates].filter(x=>updateFilter==='All updates'||x.team===updateFilter).slice(0,limit).map(x=>`<article class="update-item"><span class="update-avatar">${escapeHTML(x.initials||'JV')}</span><div class="update-body"><p><strong>${escapeHTML(x.name||'Joris van Dijk')}</strong><br>${escapeHTML(x.text)}</p><span>${escapeHTML(x.when||'Saved locally')} · ${escapeHTML(x.team)}</span></div></article>`).join('')||'<p class="empty">No updates for this team yet.</p>';}
+function weekDates(){const start=new Date(today);start.setDate(start.getDate()-(start.getDay()+6)%7);return Array.from({length:5},(_,i)=>{const d=new Date(start);d.setDate(d.getDate()+i);return d;});}
+function dateStrip(){return `<div class="date-strip" aria-label="Select weekday">${weekDates().map(d=>`<button class="${dateKey(d)===selectedDate?'current':''}" data-date="${dateKey(d)}" aria-pressed="${dateKey(d)===selectedDate}">${new Intl.DateTimeFormat('en',{weekday:'short'}).format(d).toUpperCase()}<b>${d.getDate()}</b></button>`).join('')}</div>`;}
+function dayEvents(){const day=new Date(`${selectedDate}T12:00:00`).getDay();const demo=day>0&&day<6?[{title:'Daily floor briefing',time:'09:30',location:'Production hall · Demo event'},{title:'Atlas design review',time:'13:00',location:'Meeting room 02 · Demo event'},{title:'Safety walk',time:'15:30',location:'East wing · Demo event'}]:[];return [...demo,...events.filter(e=>e.date===selectedDate)].sort((a,b)=>a.time.localeCompare(b.time));}
+function eventsHTML(full=false){return dayEvents().map(e=>`<article class="${full?'full-event':'event'}"><time>${escapeHTML(e.time)}</time><div><${full?'h3':'strong'}>${escapeHTML(e.title)}</${full?'h3':'strong'}><${full?'p':'span'}>${escapeHTML(e.location||'Location to be confirmed')}</${full?'p':'span'}></div></article>`).join('')||'<p class="empty">No events scheduled. A little room to focus.</p>';}
+function projectView(){return `${heading('projects')}<div class="toolbar">${['All projects','In production','Engineering','Review'].map(f=>`<button class="filter ${f===projectFilter?'active':''}" data-filter="${f}" aria-pressed="${f===projectFilter}">${f}</button>`).join('')}</div><section class="route-grid">${projects.filter(p=>projectFilter==='All projects'||p.status===projectFilter).map(p=>`<button class="route-card" data-project="${p.name}"><div class="card-top"><span class="card-index">${p.code}</span><span class="tag ${p.status==='In production'?'green':p.status==='Review'?'orange':''}">${p.status}</span></div><h3>${p.name}</h3><p>${p.description}</p><div class="project-progress"><span>Program progress</span><strong>${p.progress}%</strong></div><span class="bar"><i style="width:${p.progress}%"></i></span><div class="project-meta"><span>${p.team} · Due ${p.due}</span><b>↗</b></div></button>`).join('')}</section>`;}
+function productionView(){const cells=[['01','Composite layup','On schedule',86],['02','Tooling inspection','Review needed',64],['03','Atlas assembly','On schedule',72],['04','Helix trimming','On schedule',58]];return `${heading('production')}<section class="production-grid">${cells.map(c=>`<article class="cell"><p class="eyebrow">CELL ${c[0]}</p><h3>${c[1]}</h3><span class="tag ${c[2]==='Review needed'?'orange':'green'}">${c[2]}</span><span class="bar"><i style="width:${c[3]}%"></i></span><small>${c[3]}% of planned work complete</small></article>`).join('')}</section><div class="callout"><div><h3>Every handoff makes a difference.</h3><p>Share a floor update with the next team.</p></div>${updateButton}</div>${metricsHTML}`;}
+function peopleView(){return `${heading('people')}<section class="directory">${people.map(p=>`<article class="person"><span class="avatar">${p[1]}</span><h3>${p[0]}</h3><p>${p[3]}</p><span class="tag">${p[2]}</span><button class="text-button" data-person="${p[1]}">View teammate ↗</button></article>`).join('')}</section><p class="privacy-note">Illustrative directory. Connect your employee directory for actual colleagues and availability.</p>`;}
+function documentsView(key){return `${heading(key)}${(key==='quality'?documents.filter(d=>['Manufacturing','Quality & safety'].includes(d.category)):documents).map(d=>`<button class="document" data-document="${escapeHTML(d.title)}"><span>▤</span><div><h3>${d.title}</h3><p>${d.category} · Preview document</p></div><b>↗</b></button>`).join('')}<p class="privacy-note">Preview library. Approved company documents have not been connected.</p>`;}
+function calendarView(){return `${heading('calendar','<button class="primary-button" data-action="event">+ Add event</button>')}<section class="calendar-page">${dateStrip()}<label class="field">Choose a date<input type="date" id="calendarDate" value="${selectedDate}" required></label><h2>${escapeHTML(new Intl.DateTimeFormat('en-GB',{weekday:'long',day:'numeric',month:'long'}).format(new Date(`${selectedDate}T12:00:00`)))}</h2>${eventsHTML(true)}</section><p class="privacy-note">Demo schedule. New events are saved in this browser only.</p>`;}
+function render(){const key=routeKey();$('.breadcrumb strong').textContent=routes[key][0].toUpperCase();document.title=`${routes[key][0]} / Scabro Workspace`;content.innerHTML=key==='overview'?overviewHTML:key==='projects'?projectView():key==='production'?productionView():key==='people'?peopleView():key==='calendar'?calendarView():documentsView(key);if(key==='overview'){
+  $('.intro',content).textContent=routes.overview[2];$('#addUpdate').dataset.action='update';$('.update-list').innerHTML=updatesHTML();$('#filterUpdates').textContent=`${updateFilter} ▾`;$('#filterUpdates').dataset.action='filter-updates';$('.add-calendar').dataset.action='event';$('.date-strip').outerHTML=dateStrip();$('.event-list').innerHTML=eventsHTML();const links=content.querySelectorAll('.view-all');links[0].outerHTML='<button class="view-all" data-action="all-updates">View all updates <span>↗</span></button>';links[1].href='#calendar';$('.text-link').href='#production';content.insertAdjacentHTML('beforeend','<section class="quicklinks" aria-label="Quick access"><a class="quicklink" href="#knowledge">The knowledge hub <span>↗</span></a><a class="quicklink" href="#quality">Quality & safety <span>↗</span></a><a class="quicklink" href="#people">Find your people <span>↗</span></a></section>');}
+  content.insertAdjacentHTML('beforeend','<footer class="page-footer"><span>SCABRO INNOVATIONS / DEMO WORKSPACE · LOCAL DATA</span><span>Built together. Ready for what’s next. <b>↗</b></span></footer>');document.querySelectorAll('.nav-item').forEach(a=>{const active=a.hash===`#${key}`;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});}
+function composer(){openModal('Share an update',`<form id="updateForm"><label class="field">Team<select name="team"><option>Operations</option><option>Engineering</option><option>Production</option><option>Quality & safety</option></select></label><label class="field">What’s happening?<textarea name="message" placeholder="Share progress, a milestone or a useful handoff…" required maxlength="1000"></textarea></label><p class="privacy-note">Saved in this browser. Updates are not sent to other teammates.</p><div class="form-actions"><button type="button" class="secondary-button" data-action="close">Cancel</button><button class="primary-button" type="submit">Save update ↗</button></div></form>`);}
+function eventComposer(){openModal('Add a team event',`<form id="eventForm"><label class="field">Event title<input name="title" maxlength="100" required placeholder="What’s on the calendar?"></label><label class="field">Date<input name="date" type="date" value="${selectedDate}" required></label><label class="field">Time<input name="time" type="time" value="10:00" required></label><label class="field">Location<input name="location" maxlength="100" placeholder="Room or production cell"></label><p class="privacy-note">Saved in this browser only. This does not send invitations.</p><div class="form-actions"><button type="button" class="secondary-button" data-action="close">Cancel</button><button class="primary-button" type="submit">Save event ↗</button></div></form>`);}
+function search(){openModal('Find your next step','<label class="field">Search pages, programs, people and documents<input id="workspaceSearch" placeholder="Try Atlas, tooling or Sanne…" autocomplete="off"></label><div id="searchResults"></div>');searchResults('');$('#workspaceSearch').focus();}
+function searchResults(query){const entries=[...Object.entries(routes).map(([id,v])=>({title:v[0],type:'Workspace page',route:id})),...projects.map(p=>({title:p.name,type:p.description,project:p.name})),...documents.map(d=>({title:d.title,type:d.category,document:d.title})),...people.map(p=>({title:p[0],type:p[2],person:p[1]}))];const matches=entries.filter(e=>`${e.title} ${e.type}`.toLowerCase().includes(query.trim().toLowerCase()));$('#searchResults').innerHTML=matches.map(e=>`<button class="search-result" ${e.route?`data-go="${e.route}"`:e.project?`data-project="${e.project}"`:e.person?`data-person="${e.person}"`:`data-document="${escapeHTML(e.document)}"`}>${escapeHTML(e.title)}<small>${escapeHTML(e.type)} ↗</small></button>`).join('')||'<p class="empty">No matches. Try a name, project or topic.</p>';}
+document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el)return;
+  if(el.dataset.action==='close')modal.close();
+  if(el.dataset.action==='update')composer();
+  if(el.dataset.action==='event')eventComposer();
+  if(el.dataset.action==='all-updates')openModal('Company updates',updatesHTML(100));
+  if(el.dataset.action==='filter-updates'){const filters=['All updates','Engineering','Production','Quality & safety','Operations'];updateFilter=filters[(filters.indexOf(updateFilter)+1)%filters.length];render();}
+  if(el.dataset.date){selectedDate=el.dataset.date;render();}
+  if(el.dataset.filter){projectFilter=el.dataset.filter;render();}
+  if(el.dataset.go){modal.close();location.hash=el.dataset.go;}
+  if(el.dataset.project){const p=projects.find(x=>x.name===el.dataset.project);if(p)openModal(`${p.name} / Program brief`,`<div class="modal-copy"><span class="tag">${p.status} · Demo program</span><p style="margin-top:18px">${p.description}</p><p>${p.detail}</p><p><strong>${p.progress}% complete</strong> · ${p.team}<br>Target: ${p.due}</p></div><div class="form-actions"><button class="primary-button" data-go="production">View production ↗</button></div>`);}
+  if(el.dataset.document){const d=documents.find(x=>x.title===el.dataset.document);if(d)openModal(d.title,`<div class="modal-copy"><span class="tag">${d.category} · Preview document</span><p style="margin-top:18px">${d.body}</p></div>`);}
+  if(el.dataset.person){const p=people.find(x=>x[1]===el.dataset.person);if(p)openModal(p[0],`<div class="modal-copy"><p><strong>${p[3]}</strong><br>${p[2]}</p><p>Illustrative profile. Contact details and live availability will appear here when an employee directory is connected.</p></div>`);}
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id==='updateForm'){e.preventDefault();const data=new FormData(e.target);const text=data.get('message').trim();if(!text){e.target.elements.message.setCustomValidity('Please enter an update.');e.target.elements.message.reportValidity();return;}updates.unshift({name:'Joris van Dijk',initials:'JV',text,team:data.get('team'),when:'Saved locally'});const stored=persist();modal.close();render();if(stored)toast('Your update is saved in this browser.');}
+  if(e.target.id==='eventForm'){e.preventDefault();const data=new FormData(e.target);const title=data.get('title').trim();if(!title){e.target.elements.title.setCustomValidity('Please enter an event title.');e.target.elements.title.reportValidity();return;}events.push({title,date:data.get('date'),time:data.get('time'),location:data.get('location').trim()});selectedDate=data.get('date');const stored=persist();modal.close();if(routeKey()==='calendar')render();else location.hash='calendar';if(stored)toast('Event saved to your local calendar.');}
+});
+document.addEventListener('input',e=>{if(e.target.id==='workspaceSearch')searchResults(e.target.value);if(e.target.setCustomValidity)e.target.setCustomValidity('');});
+document.addEventListener('change',e=>{if(e.target.id==='calendarDate'&&e.target.validity.valid&&e.target.value){selectedDate=e.target.value;render();}});
+$('#closeModal').addEventListener('click',()=>modal.close());
+modal.addEventListener('click',e=>{if(e.target===modal){const r=modal.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)modal.close();}});
+$('.top-actions .icon-button').addEventListener('click',search);
+$('.notification-button').addEventListener('click',()=>openModal('Your notifications','<div class="modal-copy"><p><strong>You’re all caught up.</strong></p><p>This demo does not receive live notifications. Shared company updates will appear here when a team service is connected.</p></div>'));
+const menu=$('.mobile-menu');function closeMenu(){$('.sidebar').classList.remove('open');menu.setAttribute('aria-expanded','false');}
+menu.addEventListener('click',()=>{const open=$('.sidebar').classList.toggle('open');menu.setAttribute('aria-expanded',String(open));});
+document.addEventListener('click',e=>{if(!e.target.closest('.sidebar, .mobile-menu'))closeMenu();});
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();search();}if(e.key==='Escape')closeMenu();});
+window.addEventListener('hashchange',()=>{render();closeMenu();window.scrollTo(0,0);content.setAttribute('tabindex','-1');content.focus({preventScroll:true});});
+render();
